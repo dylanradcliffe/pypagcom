@@ -2,6 +2,7 @@ class DecodingException(Exception):
     pass
 
 class instruction(object):
+    extend = False
     def decode(word):
         """
         Returns:
@@ -44,10 +45,53 @@ class instruction(object):
     def to10bit(addr):
         return addr & 0b1111111111
 
+    def to9bit(addr):
+        return addr & 0b111111111
 
     def from_word_ext(code, qc, pc, addr):
-        #TODO extended
-        return None
+        instClass = None
+        if code == 0:
+            addr = instruction.to9bit(addr)
+            instClass = [
+                instruction_READ,
+                instruction_WRITE,
+                instruction_RAND,
+                instruction_WAND,
+                instruction_ROR,
+                instruction_WOR,
+                instruction_RXOR,
+                instruction_EDRUPT][pc]
+        elif code == 1:
+            if qc == 0:
+                instClass = instruction_DV
+                addr = instruction.to10bit(addr)
+            else:
+                instClass = instruction_BZF
+        elif code == 2:
+            addr = instruction.to10bit(addr)
+            instClass = [
+                instruction_MSU,
+                instruction_QXCH,
+                instruction_AUG,
+                instruction_DIM][qc]
+        elif code == 3:
+            instClass = instruction_DCA
+        elif code == 4:
+            instClass = instruction_DCS
+        elif code == 5:
+            instClass = instruction_INDEX
+        elif code == 6:
+            if qc == 0:
+                instClass = instruction_SU
+                addr = instruction.to10bit(addr)
+            else:
+                instClass = instruction_BZMF
+        elif code == 7:
+            instClass = instruction_MP
+        else:
+            raise DecodingException("Invalid op code: " + str(code))
+        return instClass(addr)
+
 
     def from_word_std(code, qc, pc, addr):
         instClass = None
@@ -82,7 +126,7 @@ class instruction(object):
         elif code == 7:
             instClass = instruction_MASK
         else:
-            raise DecodingException("Invalide op code: " + str(code))
+            raise DecodingException("Invalid op code: " + str(code))
 
         return instClass(addr)
 
@@ -141,6 +185,7 @@ class instruction_INHINT(noop_instruction):
     pass
 
 class instruction_EXTEND(noop_instruction):
+    extend = True
     pass
 
 
@@ -157,7 +202,7 @@ class instruction_TCF(instruction):
 
 ### Used to handle special cases of DAS
 def instruction_DAS(addr):
-    if addr == 1: # TODO check
+    if addr == 1: 
         return instruction_DDOUBL(addr)
     else:
         return _instruction_DAS(addr)
@@ -171,7 +216,7 @@ class instruction_DDOUBL(noop_instruction):
 
 ### Used to handle special case of LXCH
 def instruction_LXCH(addr):
-    if addr == 6: # TODO check 
+    if addr == 7: 
         return instruction_ZL(addr)
     else:
         return _instruction_LXCH(addr)
@@ -262,4 +307,79 @@ class instruction_MASK(instruction):
 
 
 #### Extended Instructions ####
+class instruction_READ(instruction):
+    pass
 
+class instruction_WRITE(instruction):
+    pass
+
+class instruction_RAND(instruction):
+    pass
+
+class instruction_WAND(instruction):
+    pass
+
+class instruction_ROR(instruction):
+    pass
+
+class instruction_WOR(instruction):
+    pass
+
+class instruction_RXOR(instruction):
+    pass
+
+class instruction_EDRUPT(instruction):
+    pass
+
+class instruction_DV(instruction):
+    pass
+
+class instruction_BZF(instruction):
+    pass
+
+class instruction_MSU(instruction):
+    pass
+
+# handle special case of QXCH
+def instruction_QXCH(addr):
+    if addr == 7:
+        return instruction_ZQ(addr)
+    else:
+        return _instruction_QXCH(addr)
+
+class _instruction_QXCH(instruction):
+    pass
+
+class _instruction_ZQ(noop_instruction):
+    pass
+
+class instruction_AUG(instruction):
+    pass
+
+class instruction_DIM(instruction):
+    pass
+
+class instruction_DCA(instruction):
+    pass
+
+# handle special case of DCS
+def instruction_DCS(addr):
+    if addr == 1:
+        return instruction_DCOM(addr)
+    else:
+        return _instruction_DCS(addr)
+
+class _instruction_DCS(instruction):
+    pass
+
+class instruction_DCOM(instruction):
+    pass
+
+class instruction_SU(instruction):
+    pass
+
+class instruction_BZMF(instruction):
+    pass
+
+class instruction_MP(instruction):
+    pass
