@@ -350,7 +350,7 @@ def instruction_QXCH(addr):
 class _instruction_QXCH(instruction):
     pass
 
-class _instruction_ZQ(noop_instruction):
+class instruction_ZQ(noop_instruction):
     pass
 
 class instruction_AUG(instruction):
